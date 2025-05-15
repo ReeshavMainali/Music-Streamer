@@ -1,14 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from django.contrib import messages
 from django.urls import reverse
 from django.utils import timezone
+from django.conf import settings  # Import settings if needed
 from .models import Track
 from users.models import Genre
 from .forms import TrackUploadForm
 from .utils import get_mongodb_connection, record_listening_history, update_listening_status, get_user_recommendations
+from .db_storage import MusicFile, CoverImage
 import json
+import mimetypes
 
 def home(request):
     """Home page view"""
@@ -115,7 +118,7 @@ def upload_track(request):
                 'uploader': str(track.uploaded_by.id),
                 'upload_date': track.upload_date.isoformat(),
                 'duration': track.duration or 0,
-                'url': track.audio_file.url,
+                'url': track.audio_file.url if track.audio_file else None,
                 'cover_url': track.cover_image.url if track.cover_image else None,
             }
             
@@ -185,3 +188,25 @@ def update_listen_status(request):
             return JsonResponse({'status': 'success'})
     
     return JsonResponse({'status': 'error'}, status=400)
+
+def serve_music_file(request, filename):
+    """Serve music files from the database"""
+    try:
+        file_obj = MusicFile.objects.get(name=filename)
+        content_type = file_obj.content_type or 'audio/mpeg'
+        response = HttpResponse(file_obj.data, content_type=content_type)
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return response
+    except MusicFile.DoesNotExist:
+        return HttpResponse(status=404)
+
+def serve_cover_image(request, filename):
+    """Serve cover images from the database"""
+    try:
+        file_obj = CoverImage.objects.get(name=filename)
+        content_type = file_obj.content_type or 'image/jpeg'
+        response = HttpResponse(file_obj.data, content_type=content_type)
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return response
+    except CoverImage.DoesNotExist:
+        return HttpResponse(status=404)
