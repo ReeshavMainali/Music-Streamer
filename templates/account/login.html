@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}MeloStream - Login{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12 max-w-md">
+    <div class="bg-gray-800 rounded-xl p-8 shadow-lg">
+        <div class="text-center mb-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-purple-500" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18V5l12-2v13"/>
+                <circle cx="6" cy="18" r="3"/>
+                <circle cx="18" cy="16" r="3"/>
+            </svg>
+            <h1 class="text-2xl font-bold mt-4">Login to MeloStream</h1>
+            <p class="text-gray-400 mt-2">Welcome back! Please login to continue.</p>
+        </div>
+
+        <form method="POST" action="{% url 'account_login' %}" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-500/30 text-red-300 p-4 rounded-lg mb-4">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div>
+                <label for="{{ form.login.id_for_label }}" class="block text-sm font-medium mb-1 text-gray-300">Email</label>
+                {{ form.login|add_class:"w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500" }}
+                {% if form.login.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ form.login.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium mb-1 text-gray-300">Password</label>
+                {{ form.password|add_class:"w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500" }}
+                {% if form.password.errors %}
+                    <p class="text-red-400 text-sm mt-1">{{ form.password.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center text-white">
+                    {{ form.remember }}
+                    <label for="{{ form.remember.id_for_label }}" class="ml-2 text-sm">Remember me</label>
+                </div>
+                <a href="{% url 'account_reset_password' %}" class="text-sm text-purple-400 hover:text-purple-300">
+                    Forgot password?
+                </a>
+            </div>
+
+            {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition">
+                    Login
+                </button>
+            </div>
+        </form>
+
+        <div class="mt-6 text-center text-sm">
+            <p class="text-gray-400">
+                Don't have an account?
+                <a href="{% url 'account_signup' %}" class="text-purple-400 hover:text-purple-300 font-medium">Sign up</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}MeloStream - Sign Up{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12 max-w-lg">
+    <div class="bg-gray-800 rounded-xl p-8 shadow-lg">
+        <div class="text-center mb-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-purple-500" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <h1 class="text-2xl font-bold mt-4">Create an Account</h1>
+            <p class="text-gray-400 mt-2">Join MeloStream to discover and share music</p>
+        </div>
+
+        <form method="POST" action="{% url 'account_signup' %}" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-500/30 text-red-300 p-4 rounded-lg mb-4">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for field in form.visible_fields %}
+                    {% if field.name == 'first_name' or field.name == 'last_name' %}
+                        <div>
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium mb-1 text-gray-300">{{ field.label }}</label>
+                            {{ field|add_class:"w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500" }}
+                            {% if field.errors %}
+                                <p class="text-red-400 text-sm mt-1">{{ field.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {% for field in form.visible_fields %}
+                {% if field.name in 'email username' %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium mb-1 text-gray-300">{{ field.label }}</label>
+                    {{ field|add_class:"w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500" }}
+                    {% if field.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for field in form.visible_fields %}
+                    {% if field.name == 'password1' or field.name == 'password2' %}
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium mb-1 text-gray-300">{{ field.label }}</label>
+                        {{ field|add_class:"w-full bg-gray-700 text-white border border-gray-600 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500" }}
+                        {% if field.errors %}
+                            <p class="text-red-400 text-sm mt-1">{{ field.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div>
+                <h3 class="text-lg font-medium mb-3 text-white">Select Your Favorite Genres</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-gray-700 p-4 rounded-lg text-white">
+                    {{ form.favorite_genres }}
+                    {% if form.favorite_genres.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ form.favorite_genres.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition">
+                    Sign Up
+                </button>
+            </div>
+        </form>
+
+        <div class="mt-6 text-center text-sm">
+            <p class="text-gray-400">
+                Already have an account?
+                <a href="{% url 'account_login' %}" class="text-purple-400 hover:text-purple-300 font-medium">Login</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

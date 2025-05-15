@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}MeloStream - Profile{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-5xl">
+    <h1 class="text-3xl font-bold mb-8">Your Profile</h1>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Profile Information -->
+        <div class="lg:col-span-2">
+            <div class="bg-gray-800 rounded-xl p-8 shadow-lg mb-8">
+                <h2 class="text-2xl font-semibold mb-6">Profile Information</h2>
+                
+                <form method="post" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Username</label>
+                            <input type="text" value="{{ user.username }}" class="bg-gray-700 rounded-lg px-4 py-2 w-full" disabled>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                            <input type="email" value="{{ user.email }}" class="bg-gray-700 rounded-lg px-4 py-2 w-full" disabled>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ form.date_of_birth.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1">Date of Birth (Optional)</label>
+                            {{ form.date_of_birth|as_crispy_field }}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.avatar.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1">Profile Picture (Optional)</label>
+                            {% if user.profile.avatar %}
+                            <div class="mb-2">
+                                <img src="{{ user.profile.avatar.url }}" alt="Profile Picture" class="h-16 w-16 object-cover rounded-full">
+                            </div>
+                            {% endif %}
+                            {{ form.avatar|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.bio.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1">Bio (Optional)</label>
+                        {{ form.bio|as_crispy_field }}
+                    </div>
+                    
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition">
+                        Save Changes
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Favorite Genres -->
+            <div class="bg-gray-800 rounded-xl p-8 shadow-lg">
+                <h2 class="text-2xl font-semibold mb-6">Favorite Genres</h2>
+                
+                <form method="post" action="{% url 'update_genres' %}">
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                        {% for genre in form.favorite_genres.field.queryset %}
+                        <div class="flex items-center">
+                            <input type="checkbox" name="genres" id="genre-{{ genre.id }}" value="{{ genre.id }}" class="rounded text-purple-600 focus:ring-purple-500"
+                                {% if genre in user.profile.favorite_genres.all %}checked{% endif %}>
+                            <label for="genre-{{ genre.id }}" class="ml-2">{{ genre.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition">
+                        Update Genres
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <!-- Listening History -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+                <h2 class="text-xl font-semibold mb-4">Recent Listening</h2>
+                
+                <div class="space-y-4">
+                    {% for item in listening_history %}
+                    <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                        <div class="w-10 h-10 bg-purple-900 rounded-md flex items-center justify-center mr-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium truncate">{{ item.track_info.title }}</p>
+                            <p class="text-xs text-gray-400 truncate">{{ item.track_info.artist }}</p>
+                        </div>
+                        <div class="text-xs text-gray-400">
+                            {{ item.timestamp|date:"M d" }}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <p class="text-gray-400">No listening history yet</p>
+                        <a href="{% url 'track_list' %}" class="text-purple-400 hover:text-purple-300 mt-2 inline-block">Discover music</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Uploaded Tracks -->
+            <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+                <h2 class="text-xl font-semibold mb-4">Your Uploads</h2>
+                
+                <div class="space-y-4">
+                    {% for track in user.uploaded_tracks.all|slice:":5" %}
+                    <a href="{% url 'track_detail' track.id %}" class="block">
+                        <div class="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 flex items-center">
+                            {% if track.cover_image %}
+                            <img src="{{ track.cover_image.url }}" alt="" class="w-10 h-10 object-cover rounded-md mr-3">
+                            {% else %}
+                            <div class="w-10 h-10 bg-gray-600 rounded-md flex items-center justify-center mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                            </div>
+                            {% endif %}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium truncate">{{ track.title }}</p>
+                                <p class="text-xs text-gray-400 truncate">{{ track.artist }}</p>
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <p class="text-gray-400">You haven't uploaded any tracks yet</p>
+                        <a href="{% url 'upload_track' %}" class="text-purple-400 hover:text-purple-300 mt-2 inline-block">Upload music</a>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if user.uploaded_tracks.count > 5 %}
+                    <div class="text-center pt-2">
+                        <a href="{% url 'track_list' %}" class="text-purple-400 hover:text-purple-300 text-sm">
+                            View all ({{ user.uploaded_tracks.count }})
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}MeloStream - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold">Welcome, {{ user.username }}</h1>
+        {% comment %} <a href="{% url 'upload_track' %}" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+            Upload Music
+        </a> {% endcomment %}
+    </div>
+    
+    <!-- For You Section -->
+    {% if recommended_tracks %}
+    <section class="mb-12">
+        <h2 class="text-2xl font-bold mb-4">For You</h2>
+        <p class="text-gray-400 mb-6">Based on your favorite genres</p>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
+            {% for track in recommended_tracks %}
+            <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg transform transition duration-300 hover:translate-y-[-5px] group">
+                <a href="{% url 'track_detail' track.id %}" class="block">
+                    <div class="relative">
+                        {% if track.cover_image %}
+                        <img src="{{ track.cover_image.url }}" alt="{{ track.title }}" class="w-full aspect-square object-cover">
+                        {% else %}
+                        <div class="w-full aspect-square bg-gray-700 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                        </div>
+                        {% endif %}
+                        <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                            <button class="bg-white rounded-full p-3 text-purple-900 transform transition duration-300 hover:scale-110">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold truncate">{{ track.title }}</h3>
+                        <p class="text-gray-400 truncate">{{ track.artist }}</p>
+                        {% if track.genre %}
+                        <div class="mt-2 inline-block px-2 py-1 bg-purple-900/30 text-purple-400 text-xs rounded-full">
+                            {{ track.genre.name }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    
+    <!-- Recently Added -->
+    <section class="mb-12">
+        <h2 class="text-2xl font-bold mb-4">Recently Added</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+            {% for track in recent_tracks %}
+            <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg transform transition duration-300 hover:translate-y-[-5px] group">
+                <a href="{% url 'track_detail' track.id %}" class="block">
+                    <div class="relative">
+                        {% if track.cover_image %}
+                        <img src="{{ track.cover_image.url }}" alt="{{ track.title }}" class="w-full aspect-square object-cover">
+                        {% else %}
+                        <div class="w-full aspect-square bg-gray-700 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                        </div>
+                        {% endif %}
+                        <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                            <button class="bg-white rounded-full p-3 text-purple-900 transform transition duration-300 hover:scale-110">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold truncate">{{ track.title }}</h3>
+                        <p class="text-gray-400 truncate">{{ track.artist }}</p>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    
+    <!-- Your Favorite Genres -->
+    <section class="mb-12">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold">Your Favorite Genres</h2>
+            <a href="{% url 'profile' %}" class="text-purple-400 hover:text-purple-300 text-sm flex items-center">
+                Edit preferences
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>
+        </div>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {% for genre in favorite_genres %}
+            <div class="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-lg p-6 text-center h-full flex items-center justify-center transform transition duration-300 hover:scale-105 hover:shadow-lg">
+                <h3 class="text-lg font-semibold">{{ genre.name }}</h3>
+            </div>
+            {% empty %}
+            <div class="col-span-full bg-gray-800 rounded-lg p-6 text-center">
+                <p class="text-gray-400">You haven't selected any favorite genres yet. <a href="{% url 'profile' %}" class="text-purple-400 hover:text-purple-300">Update your preferences</a></p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    
+    <!-- Explore Genres -->
+    <section>
+        <h2 class="text-2xl font-bold mb-4">Explore All Genres</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for genre in genres %}
+            <a href="{% url 'track_list' %}?genre={{ genre.id }}" class="block bg-gray-800 rounded-lg overflow-hidden transform transition duration-300 hover:bg-gray-700">
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold mb-1">{{ genre.name }}</h3>
+                    {% if genre.description %}
+                    <p class="text-gray-400 text-sm">{{ genre.description }}</p>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize track cards with play buttons
+    document.querySelectorAll('.group button').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const trackLink = this.closest('a').getAttribute('href');
+            window.location.href = trackLink;
+        });
+    });
+</script>
+{% endblock %}

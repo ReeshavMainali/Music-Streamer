@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ track.title }} - MeloStream{% endblock %}
+
+{% block extra_css %}
+<style>
+    .visualizer {
+        height: 60px;
+        width: 100%;
+        overflow: hidden;
+    }
+    .visualizer-bar {
+        width: 5px;
+        margin: 0 1px;
+        background-color: #8b5cf6;
+        border-radius: 1px;
+        transform-origin: bottom;
+        transition: transform 0.1s ease;
+    }
+    .waveform {
+        position: relative;
+        height: 80px;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .waveform-progress {
+        position: absolute;
+        height: 100%;
+        width: 0%;
+        background: rgba(139, 92, 246, 0.2);
+        transition: width 0.1s linear;
+    }
+    .time-marker {
+        position: absolute;
+        height: 100%;
+        width: 2px;
+        background: #8b5cf6;
+        top: 0;
+        transition: left 0.1s linear;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-gray-800 rounded-xl overflow-hidden">
+        <div class="p-8 lg:flex">
+            <div class="lg:w-1/3 flex justify-center mb-6 lg:mb-0">
+                <div class="relative w-64 h-64 rounded-lg overflow-hidden shadow-lg">
+                    {% if track.cover_image %}
+                    <img src="{{ track.cover_image.url }}" alt="{{ track.title }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full bg-gray-700 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="lg:w-2/3 lg:pl-8">
+                <div class="mb-6">
+                    <h1 class="text-3xl font-bold mb-2">{{ track.title }}</h1>
+                    <p class="text-xl text-gray-300 mb-4">{{ track.artist }}</p>
+                    
+                    <div class="flex flex-wrap items-center text-sm text-gray-400 mb-6">
+                        {% if track.genre %}
+                        <span class="mr-4 bg-purple-900/30 text-purple-400 px-3 py-1 rounded-full">
+                            {{ track.genre.name }}
+                        </span>
+                        {% endif %}
+                        <span class="mr-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            {{ track.upload_date|date:"F j, Y" }}
+                        </span>
+                        <span class="mr-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            {{ track.uploaded_by.username }}
+                        </span>
+                        {% if track.duration %}
+                        <span class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            {{ minutes }} min {{ seconds }} sec
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="waveform mb-4">
+                    <div class="waveform-progress"></div>
+                    <div class="time-marker" style="left: 0%"></div>
+                </div>
+                
+                <div class="flex justify-between items-center mb-6">
+                    <div class="text-sm text-gray-400">
+                        <span id="current-time">0:00</span> / <span id="duration">0:00</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button id="play-btn" class="bg-purple-600 hover:bg-purple-700 text-white rounded-full p-4 transition focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        </button>
+                        <button id="pause-btn" class="bg-purple-600 hover:bg-purple-700 text-white rounded-full p-4 transition focus:outline-none hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <button id="volume-btn" class="text-gray-400 hover:text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+                        </button>
+                        <input type="range" id="volume-slider" min="0" max="100" value="100" class="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+                
+                <div class="visualizer flex items-end justify-center h-16 mb-4">
+                    <div class="flex h-full items-end">
+                        <!-- Visualizer bars will be added dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Similar tracks -->
+    {% if similar_tracks %}
+    <div class="mt-12">
+        <h2 class="text-2xl font-bold mb-4">You might also like</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {% for similar in similar_tracks %}
+            <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg transform transition duration-300 hover:scale-105 group">
+                <a href="{% url 'track_detail' similar.id %}" class="block">
+                    <div class="relative">
+                        {% if similar.cover_image %}
+                        <img src="{{ similar.cover_image.url }}" alt="{{ similar.title }}" class="w-full aspect-square object-cover">
+                        {% else %}
+                        <div class="w-full aspect-square bg-gray-700 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                        </div>
+                        {% endif %}
+                        <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                            <button class="bg-white rounded-full p-3 text-purple-900 transform transition duration-300 hover:scale-110">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold truncate">{{ similar.title }}</h3>
+                        <p class="text-gray-400 truncate">{{ similar.artist }}</p>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Hidden audio element -->
+<audio id="audio-source" src="{{ track.audio_file.url }}" preload="metadata"></audio>
+
+<input type="hidden" id="history-id" value="{{ history_id }}">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("dom loaded");
+        const audio = document.getElementById('audio-source');
+        const playBtn = document.getElementById('play-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const volumeBtn = document.getElementById('volume-btn');
+        const volumeSlider = document.getElementById('volume-slider');
+        const currentTimeDisplay = document.getElementById('current-time');
+        const durationDisplay = document.getElementById('duration');
+        const waveformProgress = document.querySelector('.waveform-progress');
+        const timeMarker = document.querySelector('.time-marker');
+        const waveform = document.querySelector('.waveform');
+        const visualizerContainer = document.querySelector('.visualizer div');
+        const historyId = document.getElementById('history-id').value;
+        
+        let isPlaying = false;
+        let listenedToEnd = false;
+        const bars = 50;
+        
+        // Create visualizer bars
+        for (let i = 0; i < bars; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'visualizer-bar';
+            bar.style.height = '0%';
+            visualizerContainer.appendChild(bar);
+        }
+        
+        const visualizerBars = document.querySelectorAll('.visualizer-bar');
+        
+        // Format time in seconds to MM:SS
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+        
+        // Update progress bar and time displays
+        function updateProgress() {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            waveformProgress.style.width = `${progress}%`;
+            timeMarker.style.left = `${progress}%`;
+            currentTimeDisplay.textContent = formatTime(audio.currentTime);
+            
+            // Mark as listened if 90% complete
+            if (!listenedToEnd && (audio.currentTime / audio.duration > 0.9)) {
+                listenedToEnd = true;
+                updateListenStatus(true);
+            }
+        }
+        
+        // Play/Pause functions
+        function playAudio() {
+            audio.play();
+            playBtn.classList.add('hidden');
+            pauseBtn.classList.remove('hidden');
+            isPlaying = true;
+            
+            // Initialize the global player
+            {% comment %} initGlobalPlayer(); {% endcomment %}
+            
+            // Start visualizer
+            if (!window.visualizerInterval) {
+                window.visualizerInterval = setInterval(updateVisualizer, 100);
+            }
+        }
+        
+        function pauseAudio() {
+            audio.pause();
+            pauseBtn.classList.add('hidden');
+            playBtn.classList.remove('hidden');
+            isPlaying = false;
+        }
+        
+        // Initialize visualizer
+        function updateVisualizer() {
+            if (!isPlaying) return;
+            
+            for (let i = 0; i < visualizerBars.length; i++) {
+                const bar = visualizerBars[i];
+                // Generate random height for bars (this is just for visual effect)
+                const height = Math.floor(Math.random() * 100) + 10;
+                bar.style.height = `${height}%`;
+            }
+        }
+        
+        // Set up the global player with current track
+        function initGlobalPlayer() {
+            const globalPlayer = document.getElementById('global-player');
+            const playerTitle = document.getElementById('player-title');
+            const playerArtist = document.getElementById('player-artist');
+            const playerCover = document.getElementById('player-cover');
+            const playerAudio = document.getElementById('audio-player');
+            
+            globalPlayer.classList.remove('hidden');
+            playerTitle.textContent = '{{ track.title }}';
+            playerArtist.textContent = '{{ track.artist }}';
+            
+            {% if track.cover_image %}
+            playerCover.src = '{{ track.cover_image.url }}';
+            {% else %}
+            playerCover.src = '{% static "images/default-cover.jpg" %}';
+            {% endif %}
+            
+            playerAudio.src = '{{ track.audio_file.url }}';
+            playerAudio.currentTime = audio.currentTime;
+            
+            // Sync local and global players
+            audio.addEventListener('timeupdate', function() {
+                playerAudio.currentTime = audio.currentTime;
+            });
+        }
+        
+        // Send listening status to server
+        function updateListenStatus(completed) {
+            fetch('{% url "update_listen_status" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    'history_id': historyId,
+                    'completed': completed
+                })
+            });
+        }
+        
+        // Get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Event listeners
+        audio.addEventListener('loadedmetadata', function() {
+            durationDisplay.textContent = formatTime(audio.duration);
+        });
+        
+        audio.addEventListener('timeupdate', updateProgress);
+        
+        audio.addEventListener('ended', function() {
+            pauseAudio();
+            // Mark as listened completely
+            updateListenStatus(true);
+        });
+        
+        playBtn.addEventListener('click', playAudio);
+        pauseBtn.addEventListener('click', pauseAudio);
+        
+        volumeSlider.addEventListener('input', function() {
+            audio.volume = this.value / 100;
+        });
+        
+        waveform.addEventListener('click', function(e) {
+            const rect = waveform.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = pos * audio.duration;
+            updateProgress();
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Space bar to play/pause
+            if (e.code === 'Space' && e.target === document.body) {
+                e.preventDefault();
+                isPlaying ? pauseAudio() : playAudio();
+            }
+        });
+    });
+</script>
+{% endblock %}
