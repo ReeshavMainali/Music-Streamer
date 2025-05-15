@@ -1,17 +1,21 @@
 from django import forms
 from .models import Track
-from users.models import Genre
-from mutagen.mp3 import MP3
-import mutagen
 
 class TrackUploadForm(forms.ModelForm):
     """Form for uploading music tracks"""
+    audio_file = forms.FileField(
+        label='Audio File',
+        help_text='Supported formats: MP3, WAV, OGG'
+    )
+    cover_image = forms.ImageField(
+        label='Cover Image',
+        required=False,
+        help_text='Optional: Upload album art or cover image'
+    )
+    
     class Meta:
         model = Track
-        fields = ['title', 'artist', 'genre', 'audio_file', 'cover_image']
-        widgets = {
-            'genre': forms.Select(attrs={'class': 'form-select'}),
-        }
+        fields = ['title', 'artist', 'album', 'genre', 'audio_file', 'cover_image']
     
     def clean_audio_file(self):
         """Validate that the uploaded file is an audio file and extract its duration"""
