@@ -15,9 +15,9 @@ class Track(models.Model):
     genre = models.ForeignKey('users.Genre', on_delete=models.SET_NULL, null=True)
     duration = models.IntegerField(blank=True, null=True)  # Duration in seconds
     
-    # Use database storage instead of FileField
-    audio_file = models.CharField(max_length=255)  # Store just the filename
-    cover_image = models.CharField(max_length=255, blank=True, null=True)  # Store just the filename
+    # Use FileField/ImageField with our custom storage
+    audio_file = models.FileField(upload_to='tracks/', storage=music_storage)
+    cover_image = models.ImageField(upload_to='covers/', blank=True, null=True, storage=cover_storage)
     
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     upload_date = models.DateTimeField(default=timezone.now)

@@ -16,6 +16,10 @@ class TrackUploadForm(forms.ModelForm):
     class Meta:
         model = Track
         fields = ['title', 'artist', 'album', 'genre', 'audio_file', 'cover_image']
+        help_texts = {
+            'audio_file': 'Supported formats: MP3, WAV, OGG',
+            'cover_image': 'Optional: Upload album art or cover image',
+        }
     
     def clean_audio_file(self):
         """Validate that the uploaded file is an audio file and extract its duration"""

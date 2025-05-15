@@ -102,19 +102,9 @@ def upload_track(request):
     if request.method == 'POST':
         form = TrackUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            # Create track without files first to get an ID
             track = form.save(commit=False)
             track.uploaded_by = request.user
-            track.audio_file = ''  # Temporary placeholder
             track.save()
-            
-            # Now save the files using the track ID
-            audio_file = request.FILES['audio_file']
-            track.save_audio_file(audio_file)
-            
-            if 'cover_image' in request.FILES:
-                cover_image = request.FILES['cover_image']
-                track.save_cover_image(cover_image)
             
             # Save track metadata to MongoDB
             db = get_mongodb_connection()
@@ -128,8 +118,8 @@ def upload_track(request):
                 'uploader': str(track.uploaded_by.id),
                 'upload_date': track.upload_date.isoformat(),
                 'duration': track.duration or 0,
-                'url': track.audio_url,
-                'cover_url': track.cover_url,
+                'url': track.audio_file.url if track.audio_file else None,
+                'cover_url': track.cover_image.url if track.cover_image else None,
             }
             
             tracks_collection.insert_one(track_data)
