@@ -19,9 +19,7 @@ Music Streamer is a web application that allows users to upload, stream, and dis
 
 - **Backend**: Django
 - **Frontend**: HTML, CSS, JavaScript, Tailwind CSS
-- **Databases**:
-  - PostgreSQL (User data, Music metadata)
-  - MongoDB (Listening history, Recommendations)
+- **Databases**:sqlite3 , MongoDB
 - **Asset Management**: Webpack
 
 ## Architecture
@@ -46,17 +44,13 @@ Recommendations generated from preferred genres
 
 ## Database Schema
 
-### PostgreSQL (Relational)
+### Sqlite3 (Relational)
 
 - **CustomUser**: Extended user model with authentication details
 - **UserProfile**: User preferences and profile information
 - **Track**: Music metadata and file references
 - **Genre**: Music categorization
 
-### MongoDB (NoSQL)
-
-- **listening_history**: Records of user listening activity
-- **tracks**: Cached track information for quick access
 
 ## Implementation Details
 
